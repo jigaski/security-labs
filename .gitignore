@@ -1,0 +1,6 @@
+﻿extracted/
+*.eml
+*.pdf
+*.zip
+.env
+*.pem
