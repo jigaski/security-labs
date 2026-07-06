@@ -1,9 +1,8 @@
 # Security Labs
-
 Hands-on security labs and documented investigations.
 
 | Lab | Description | Tools |
 |-----|-------------|-------|
 | [Phishing Analysis](phishing-analysis/) | Manual triage of a real Amazon-impersonation phishing email — header/auth analysis, MIME structure, attachment triage, IOC extraction across the kill chain | PowerShell, Python, VirusTotal, urlscan.io |
 | AWS CloudTrail → Splunk | *(coming soon)* | Splunk, AWS, SPL |
-| Wazuh | *(coming soon)* | Wazuh |
+| [Wazuh Detection Engineering](wazuh-detection-lab/) | AD brute-force detection on a Windows Server 2022 DC — atomic vs. composite rule escalation (60122 → 60204), MITRE T1110 mapping, a documented scan coverage gap, and an agent-health/fleet-reporting cycle | Wazuh, Sysmon, netexec, nmap, Kali |
