@@ -1,5 +1,4 @@
-# Security Labs
-Hands-on security labs and documented investigations.
+﻿# Phishing Analysis — Amazon Impersonation (Credential Harvest)
 
 Full manual triage of a real phishing email from a honeypot corpus: header/auth
 analysis, MIME structure, attachment triage, hash + reputation lookup, and IOC
@@ -48,18 +47,18 @@ Google/ESPs constantly); the relevant fact is that the authenticated domain is
 
 Decoded MIME encoded-words (RFC 2047):
 
-- **From (display):** "Amazon Service" : actual address
+- **From (display):** "Amazon Service" — actual address
   `cs-noreplygrusakgrusuk0384911323@arulnotes.com` (gibberish-padded local part
   faking a service noreply)
 - **Subject:** `[Important] Unauthorized access; Your Amazon...`
 
 The message *presents* as Amazon while the *authenticated* domain is `arulnotes.com`.
-Claim and cryptographic identity contradict: the core phishing indicator.
+Claim and cryptographic identity contradict — the core phishing indicator.
 
 **Evasion signal:** the word "Amazon" in the subject and display name was padded with
 zero-width / junk bytes (`A=DC=BF m=DC=BF a...`) to defeat keyword-based brand-impersonation
 filters while still rendering as "Amazon" to the human. Deliberate filter evasion is a
-near-conclusive intent signal as a legitimate Amazon email has no reason to hide the word "Amazon."
+near-conclusive intent signal — legitimate Amazon has no reason to hide the word "Amazon."
 
 ### 3. Body / URL extraction
 
@@ -127,7 +126,7 @@ mechanism inferred, not directly observed.)
 | Origin IP | `209.85.221.193` | Google Workspace relay (`mail-vk1-f193.google.com`) |
 | From (spoofed) | "Amazon Service" `<cs-noreplygrusakgrusuk0384911323@arulnotes.com>` | Display/domain mismatch |
 | Attachment | `StatementAmazon#CASE-3987187467.pdf` | Lure PDF; VT-malicious; benign structure |
-| Attachment SHA256 | `73a0e5d5582ec223d1d4216df506c5ce6961948f76d39f73a84e966b607ea1b7` | From `Get-FileHash` / Python extraction |
+| Attachment SHA256 | `<fill in>` | From `Get-FileHash` / Python extraction |
 | Harvest domain | `i-centrix.com` | Registered 2025-10-09; 1/91; defunct at analysis time |
 
 ---
