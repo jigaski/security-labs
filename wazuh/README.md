@@ -49,7 +49,7 @@ target — reflected in the fleet-health numbers below.
 
 ## Activity Generated
 
-| # | Activity | Command (from Kali) | ATT&CK |
+| # | Activity | Command | ATT&CK |
 |---|---|---|---|
 | 1 | TCP port/service scan | `nmap -sS -p- 10.0.2.10` | T1046 |
 | 2 | SMB failed-auth burst | `nxc smb 10.0.2.10 -u Administrator -p wrong1..wrongN` | T1110 |
