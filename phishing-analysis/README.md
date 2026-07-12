@@ -126,7 +126,7 @@ mechanism inferred, not directly observed.)
 | Origin IP | `209.85.221.193` | Google Workspace relay (`mail-vk1-f193.google.com`) |
 | From (spoofed) | "Amazon Service" `<cs-noreplygrusakgrusuk0384911323@arulnotes.com>` | Display/domain mismatch |
 | Attachment | `StatementAmazon#CASE-3987187467.pdf` | Lure PDF; VT-malicious; benign structure |
-| Attachment SHA256 | `<fill in>` | From `Get-FileHash` / Python extraction |
+| Attachment SHA256 | `73a0e5d5582ec223d1d4216df506c5ce6961948f76d39f73a84e966b607ea1b7` | From `Get-FileHash` / Python extraction |
 | Harvest domain | `i-centrix.com` | Registered 2025-10-09; 1/91; defunct at analysis time |
 
 ---
