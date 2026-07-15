@@ -51,7 +51,6 @@ index = aws
 disabled = 0
 ```
 
-**Gotcha — `initial_scan_datetime` timestamp format.** The input rejected `Z`-suffix and epoch timestamps with `HTTP 400 Invalid time`. It only accepted an ISO 8601 value with a numeric UTC offset (e.g. `-05:00`); dropping the line entirely also works and lets the input scan from the beginning.
 
 **Region note.** `ConsoleLogin` events for the global sign-in endpoint are logged in **us-east-1**, regardless of where the bucket lives. A single-region trail silently misses them. The trail must be **multi-region** — otherwise failed-login detection never sees any data. (An S3 bucket in one region can still receive logs from all regions; bucket region and trail scope are independent.)
 
