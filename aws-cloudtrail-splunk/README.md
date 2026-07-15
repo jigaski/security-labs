@@ -52,8 +52,6 @@ disabled = 0
 ```
 
 
-**Region note.** `ConsoleLogin` events for the global sign-in endpoint are logged in **us-east-1**, regardless of where the bucket lives. A single-region trail silently misses them. The trail must be **multi-region** — otherwise failed-login detection never sees any data. (An S3 bucket in one region can still receive logs from all regions; bucket region and trail scope are independent.)
-
 **Validation:**
 ```spl
 index=aws sourcetype=aws:cloudtrail
