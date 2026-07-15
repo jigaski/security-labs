@@ -143,7 +143,6 @@ The event falls into the gap between when the window looks and when the data arr
 **The fix — search by index time, not event time.** `_index_earliest=-16m@m` / `_index_latest=now` gate on when events *arrived*, not when they occurred, with the alert's own time-range picker set wide (Last 24h) so it doesn't clip. Late-arriving data is now impossible to miss, with no duplicates.
 
 **Related failure modes surfaced in the same lab:**
-- **Unsaved edit.** Editing SPL in the search bar does not update a saved alert. The fix has to be saved *into the alert config* — verified by re-reading the config, not by assuming.
 - **App-context scoping.** Fired alerts only appear on the Triggered Alerts page under the app they belong to (Search & Reporting). With the page defaulted to another app context, working alerts look like they never fired.
 - **Scheduler lag on a non-server host.** On a laptop that sleeps, the scheduler wakes to a backlog of missed ticks and burns through them (observed lag up to ~21,000s), tripping the Search Lag health warning and skipping runs on the concurrency limit. Harmless in a lab; in production it means detection coverage has a hole the shape of the downtime — which is exactly why SIEMs run on always-on infrastructure, and why scheduler lag is itself a monitored signal.
 
