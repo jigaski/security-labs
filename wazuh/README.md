@@ -170,15 +170,44 @@ the fleet status degrade, then recover.
 
 ---
 
-## Screenshots Captured
+## Screenshots
 
-- [x] Discover — Sysmon telemetry landing in Wazuh (baseline, end-to-end pipeline confirmed)
-- [x] Expanded 60122 alert JSON (atomic failed-logon, rule.mitre fields)
-- [x] rule.level histogram showing escalation (levels 3 / 5 / 6 / 10 / 12)
-- [x] Expanded 60204 alert JSON (composite brute-force, T1110)
-- [x] Agents view — baseline 33.33% coverage
-- [x] Agents view — 0.00% coverage after agent stop
-- [x] Agents table — DC agent restored to active (recovery)
+**Sysmon telemetry in Discover** — `wazuh-alerts-*` filtered to the DC and
+`Microsoft-Windows-Sysmon/Operational`, confirming the end-to-end pipeline (40 hits,
+process-creation and file-create events landing in the indexer).
+
+![Sysmon telemetry in Discover](screenshots/sysmon_telemetry_discover.png)
+
+**rule.level histogram** — alert distribution across levels 3 / 5 / 6 / 10 / 12, showing the
+atomic-to-composite escalation.
+
+![rule.level histogram](screenshots/rule_level_histogram.png)
+
+**Composite brute-force alert (60204)** — `rule.id 60204`, `rule.level 10`,
+`rule.frequency 8`, `rule.mitre.id T1110`, Credential Access / Brute Force.
+
+![Composite brute-force alert 60204](screenshots/brute_force_level_10.png)
+
+**Windows auth event distribution** — top event IDs across the window: 4634 logoff (~48%),
+4624 logon (~44%), 4625 failed logon (~5%).
+
+![Windows auth event distribution](screenshots/auth_event_distribution.png)
+
+**Fleet coverage — baseline** — Active 1 / Disconnected 1 / Never connected 1, 33.33%.
+
+![Fleet coverage baseline 33%](screenshots/fleet_health_33.png)
+
+**Fleet coverage — after agent stop** — Active 0 / Disconnected 2, 0.00%.
+
+![Fleet coverage 0% after agent stop](screenshots/fleet_health_0.png)
+
+**Agents dashboard — recovered** — DC (`agent 001`, `10.0.2.10`, Windows Server 2022,
+agent v4.7.5) restored to active.
+
+![Agents dashboard recovered](screenshots/agents_recovered.png)
+
+> Custom cradle detection (rule 100100) screenshots — expanded 100100 alert JSON and the raw
+> Sysmon EID 1 event showing the matched `commandLine` — to be added.
 
 ---
 
